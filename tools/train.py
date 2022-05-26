@@ -345,6 +345,17 @@ def main():
                           t_inf=times[0], t_nms=times[1])
             logger.info(msg)
 
+            writer = writer_dict['writer']
+            valid_global_steps = writer_dict['valid_global_steps']
+            writer.add_scalar('valid_loss', total_loss, valid_global_steps)
+            writer.add_scalar('valid_da_seg_acc', da_segment_results[0], valid_global_steps)
+            writer.add_scalar('valid_da_seg_iou', da_segment_results[1], valid_global_steps)
+            writer.add_scalar('valid_da_seg_miou', da_segment_results[2], valid_global_steps)
+            writer.add_scalar('valid_ll_seg_acc', ll_segment_results[0], valid_global_steps)
+            writer.add_scalar('valid_ll_seg_iou', ll_segment_results[1], valid_global_steps)
+            writer.add_scalar('valid_ll_seg_miou', ll_segment_results[2], valid_global_steps)
+            writer_dict['valid_global_steps'] = valid_global_steps + 1
+
             # if perf_indicator >= best_perf:
             #     best_perf = perf_indicator
             #     best_model = True

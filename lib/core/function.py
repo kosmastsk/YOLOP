@@ -41,9 +41,20 @@ def train(cfg, train_loader, model, criterion, optimizer, scaler, epoch, num_bat
     None
 
     """
+    da_metric = SegmentationMetric(cfg.num_seg_class) #segment confusion matrix
+    ll_metric = SegmentationMetric(2)
+
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
+
+    da_acc_seg = AverageMeter()
+    da_IoU_seg = AverageMeter()
+    da_mIoU_seg = AverageMeter()
+
+    ll_acc_seg = AverageMeter()
+    ll_IoU_seg = AverageMeter()
+    ll_mIoU_seg = AverageMeter()
 
     # switch to train mode
     model.train()
@@ -83,13 +94,50 @@ def train(cfg, train_loader, model, criterion, optimizer, scaler, epoch, num_bat
         scaler.step(optimizer)
         scaler.update()
 
+        pad_w, pad_h = shapes[0][1][1]
+        pad_w = int(pad_w)
+        pad_h = int(pad_h)
+
+        nb, _, height, width = input.shape
+
         if rank in [-1, 0]:
             # measure accuracy and record loss
             losses.update(total_loss.item(), input.size(0))
 
             # _, avg_acc, cnt, pred = accuracy(output.detach().cpu().numpy(),
-            #                                  target.detach().cpu().numpy())
+                                            #  target.detach().cpu().numpy())
             # acc.update(avg_acc, cnt)
+
+            _,da_predict=torch.max(outputs[1], 1)
+            _,da_gt=torch.max(target[1], 1)
+            da_predict = da_predict[:, pad_h:height-pad_h, pad_w:width-pad_w]
+            da_gt = da_gt[:, pad_h:height-pad_h, pad_w:width-pad_w]
+
+            da_metric.reset()
+            da_metric.addBatch(da_predict.cpu(), da_gt.cpu())
+            da_acc = da_metric.pixelAccuracy()
+            da_IoU = da_metric.IntersectionOverUnion()
+            da_mIoU = da_metric.meanIntersectionOverUnion()
+
+            da_acc_seg.update(da_acc,input.size(0))
+            da_IoU_seg.update(da_IoU,input.size(0))
+            da_mIoU_seg.update(da_mIoU,input.size(0))
+
+
+            _,ll_predict=torch.max(outputs[2], 1)
+            _,ll_gt=torch.max(target[2], 1)
+            ll_predict = ll_predict[:, pad_h:height-pad_h, pad_w:width-pad_w]
+            ll_gt = ll_gt[:, pad_h:height-pad_h, pad_w:width-pad_w]
+
+            ll_metric.reset()
+            ll_metric.addBatch(ll_predict.cpu(), ll_gt.cpu())
+            ll_acc = ll_metric.pixelAccuracy()
+            ll_IoU = ll_metric.IntersectionOverUnion()
+            ll_mIoU = ll_metric.meanIntersectionOverUnion()
+
+            ll_acc_seg.update(ll_acc,input.size(0))
+            ll_IoU_seg.update(ll_IoU,input.size(0))
+            ll_mIoU_seg.update(ll_mIoU,input.size(0))
 
             # measure elapsed time
             batch_time.update(time.time() - start)
@@ -107,8 +155,18 @@ def train(cfg, train_loader, model, criterion, optimizer, scaler, epoch, num_bat
 
                 writer = writer_dict['writer']
                 global_steps = writer_dict['train_global_steps']
+                writer.add_scalar('learning_rate', x['lr'], global_steps)
+
                 writer.add_scalar('train_loss', losses.val, global_steps)
-                # writer.add_scalar('train_acc', acc.val, global_steps)
+
+                writer.add_scalar('da_train_acc', da_acc, global_steps)
+                writer.add_scalar('da_IoU_train_acc', da_IoU, global_steps)
+                writer.add_scalar('da_mIoU_train_acc', da_mIoU, global_steps)
+
+                writer.add_scalar('ll_train_acc', ll_acc, global_steps)
+                writer.add_scalar('ll_IoU_train_acc', ll_IoU, global_steps)
+                writer.add_scalar('ll_mIoU_train_acc', ll_mIoU, global_steps)
+
                 writer_dict['train_global_steps'] = global_steps + 1
 
 
