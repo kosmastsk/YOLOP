@@ -155,7 +155,7 @@ def train(cfg, train_loader, model, criterion, optimizer, scaler, epoch, num_bat
 
                 writer = writer_dict['writer']
                 global_steps = writer_dict['train_global_steps']
-                writer.add_scalar('learning_rate', x['lr'], global_steps)
+                # writer.add_scalar('learning_rate', x['lr'], global_steps)
 
                 writer.add_scalar('train_loss', losses.val, global_steps)
 

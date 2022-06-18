@@ -318,6 +318,10 @@ def main():
     for epoch in range(begin_epoch+1, cfg.TRAIN.END_EPOCH+1):
         if rank != -1:
             train_loader.sampler.set_epoch(epoch)
+        
+        writer = writer_dict['writer']
+        writer.add_scalar('learning_rate', lr_scheduler.get_last_lr(), epoch)
+
         # train for one epoch
         train(cfg, train_loader, model, criterion, optimizer, scaler,
               epoch, num_batch, num_warmup, writer_dict, logger, device, rank)
