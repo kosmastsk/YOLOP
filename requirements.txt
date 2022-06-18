@@ -13,3 +13,4 @@ seaborn
 prefetch_generator
 imageio
 scikit-learn
+protobuf==3.20
