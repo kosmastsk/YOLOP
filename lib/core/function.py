@@ -317,28 +317,29 @@ def validate(epoch,config, val_loader, val_dataset, model, criterion, output_dir
                     for i in range(test_batch_size):
                         img_test = cv2.imread(paths[i])
                         da_seg_mask = da_seg_out[i][:, pad_h:height-pad_h, pad_w:width-pad_w].unsqueeze(0)
-                        da_seg_mask = torch.nn.functional.interpolate(da_seg_mask, scale_factor=int(1/ratio), mode='bilinear')
+                        da_seg_mask = torch.nn.functional.interpolate(da_seg_mask, scale_factor=(1/ratio), mode='bilinear')
                         _, da_seg_mask = torch.max(da_seg_mask, 1)
 
                         da_gt_mask = target[1][i][:, pad_h:height-pad_h, pad_w:width-pad_w].unsqueeze(0)
-                        da_gt_mask = torch.nn.functional.interpolate(da_gt_mask, scale_factor=int(1/ratio), mode='bilinear')
+                        da_gt_mask = torch.nn.functional.interpolate(da_gt_mask, scale_factor=(1/ratio), mode='bilinear')
                         _, da_gt_mask = torch.max(da_gt_mask, 1)
 
                         da_seg_mask = da_seg_mask.int().squeeze().cpu().numpy()
                         da_gt_mask = da_gt_mask.int().squeeze().cpu().numpy()
                         # seg_mask = seg_mask > 0.5
                         # plot_img_and_mask(img_test, seg_mask, i,epoch,save_dir)
+
                         img_test1 = img_test.copy()
                         _ = show_seg_result(img_test, da_seg_mask, i,epoch,save_dir)
                         _ = show_seg_result(img_test1, da_gt_mask, i, epoch, save_dir, is_gt=True)
 
                         img_ll = cv2.imread(paths[i])
                         ll_seg_mask = ll_seg_out[i][:, pad_h:height-pad_h, pad_w:width-pad_w].unsqueeze(0)
-                        ll_seg_mask = torch.nn.functional.interpolate(ll_seg_mask, scale_factor=int(1/ratio), mode='bilinear')
+                        ll_seg_mask = torch.nn.functional.interpolate(ll_seg_mask, scale_factor=(1/ratio), mode='bilinear')
                         _, ll_seg_mask = torch.max(ll_seg_mask, 1)
 
                         ll_gt_mask = target[2][i][:, pad_h:height-pad_h, pad_w:width-pad_w].unsqueeze(0)
-                        ll_gt_mask = torch.nn.functional.interpolate(ll_gt_mask, scale_factor=int(1/ratio), mode='bilinear')
+                        ll_gt_mask = torch.nn.functional.interpolate(ll_gt_mask, scale_factor=(1/ratio), mode='bilinear')
                         _, ll_gt_mask = torch.max(ll_gt_mask, 1)
 
                         ll_seg_mask = ll_seg_mask.int().squeeze().cpu().numpy()
@@ -358,7 +359,7 @@ def validate(epoch,config, val_loader, val_dataset, model, criterion, output_dir
                             #print(cls)
                             label_det_pred = f'{names[int(cls)]} {conf:.2f}'
                             plot_one_box(xyxy, img_det , label=label_det_pred, color=colors[int(cls)], line_thickness=3)
-                        cv2.imwrite(save_dir+"/batch_{}_{}_det_pred.png".format(epoch,i),img_det)
+                        # cv2.imwrite(save_dir+"/batch_{}_{}_det_pred.png".format(epoch,i),img_det)
 
                         labels = target[0][target[0][:, 0] == i, 1:]
                         # print(labels)
@@ -371,7 +372,7 @@ def validate(epoch,config, val_loader, val_dataset, model, criterion, output_dir
                             label_det_gt = f'{names[int(cls)]}'
                             xyxy = (x1,y1,x2,y2)
                             plot_one_box(xyxy, img_gt , label=label_det_gt, color=colors[int(cls)], line_thickness=3)
-                        cv2.imwrite(save_dir+"/batch_{}_{}_det_gt.png".format(epoch,i),img_gt)
+                        # cv2.imwrite(save_dir+"/batch_{}_{}_det_gt.png".format(epoch,i),img_gt)
 
         # Statistics per image
         # output([xyxy,conf,cls])

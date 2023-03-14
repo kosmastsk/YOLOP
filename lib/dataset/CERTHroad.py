@@ -1,3 +1,5 @@
+import os
+import io
 import numpy as np
 import json
 
@@ -7,7 +9,7 @@ from tqdm import tqdm
 
 single_cls = True       # just detect vehicle
 
-class BddDataset(AutoDriveDataset):
+class CERTHroad(AutoDriveDataset):
     def __init__(self, cfg, is_train, inputsize, transform=None):
         super().__init__(cfg, is_train, inputsize, transform)
         self.db = self._get_db()
@@ -31,36 +33,37 @@ class BddDataset(AutoDriveDataset):
         height, width = self.shapes
         for mask in tqdm(list(self.mask_list)):
             mask_path = str(mask)
-            label_path = mask_path.replace(str(self.mask_root), str(self.label_root)).replace(".png", ".json")
+            label_path = mask_path.replace(str(self.mask_root), str(self.label_root)).replace(".jpg", ".json")
             image_path = mask_path.replace(str(self.mask_root), str(self.img_root)).replace(".png", ".jpg")
             lane_path = mask_path.replace(str(self.mask_root), str(self.lane_root))
 
-            print(mask_path)
-            print(label_path)
-            print(image_path)
-            print(lane_path)
-            
+            if os.path.isfile(label_path) and os.access(label_path, os.R_OK):
+                pass
+            else:
+                with io.open(label_path, 'w') as db_file:
+                   db_file.write(json.dumps({}))
             with open(label_path, 'r') as f:
-                label = json.load(f)
-            data = label['frames'][0]['objects']
-            data = self.filter_data(data)
-            gt = np.zeros((len(data), 5))
-            for idx, obj in enumerate(data):
-                category = obj['category']
-                if category == "traffic light":
-                    color = obj['attributes']['trafficLightColor']
-                    category = "tl_" + color
-                if category in id_dict.keys():
-                    x1 = float(obj['box2d']['x1'])
-                    y1 = float(obj['box2d']['y1'])
-                    x2 = float(obj['box2d']['x2'])
-                    y2 = float(obj['box2d']['y2'])
-                    cls_id = id_dict[category]
-                    if single_cls:
-                         cls_id=0
-                    gt[idx][0] = cls_id
-                    box = convert((width, height), (x1, x2, y1, y2))
-                    gt[idx][1:] = list(box)
+                    label = json.load(f)
+            gt = np.zeros((1, 5))
+            # data = label['frames'][0]['objects']
+            # data = self.filter_data(data)
+            # gt = np.zeros((len(data), 5))
+            # for idx, obj in enumerate(data):
+            #     category = obj['category']
+            #     if category == "traffic light":
+            #         color = obj['attributes']['trafficLightColor']
+            #         category = "tl_" + color
+            #     if category in id_dict.keys():
+            #         x1 = float(obj['box2d']['x1'])
+            #         y1 = float(obj['box2d']['y1'])
+            #         x2 = float(obj['box2d']['x2'])
+            #         y2 = float(obj['box2d']['y2'])
+            #         cls_id = id_dict[category]
+            #         if single_cls:
+            #              cls_id=0
+            #         gt[idx][0] = cls_id
+            #         box = convert((width, height), (x1, x2, y1, y2))
+            #         gt[idx][1:] = list(box)
                 
 
             rec = [{

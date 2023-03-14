@@ -75,7 +75,7 @@ def select_device(logger=None, device='', batch_size=None):
 
     if logger:
         logger.info('')  # skip a line
-    return torch.device('cuda:0' if cuda else 'cpu')
+    return torch.device('cuda:1' if cuda else 'cpu')
 
 
 def get_optimizer(cfg, model):

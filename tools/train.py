@@ -370,16 +370,18 @@ def main():
         if rank in [-1, 0]:
             savepath = os.path.join(final_output_dir, f'epoch-{epoch}.pth')
             logger.info('=> saving checkpoint to {}'.format(savepath))
-            save_checkpoint(
-                epoch=epoch,
-                name=cfg.MODEL.NAME,
-                model=model,
-                # 'best_state_dict': model.module.state_dict(),
-                # 'perf': perf_indicator,
-                optimizer=optimizer,
-                output_dir=final_output_dir,
-                filename=f'epoch-{epoch}.pth'
-            )
+            # keep the checkpoint every 40 epochs
+            if (epoch % 40 == 0):
+                save_checkpoint(
+                    epoch=epoch,
+                    name=cfg.MODEL.NAME,
+                    model=model,
+                    # 'best_state_dict': model.module.state_dict(),
+                    # 'perf': perf_indicator,
+                    optimizer=optimizer,
+                    output_dir=final_output_dir,
+                    filename=f'epoch-{epoch}.pth'
+                )
             save_checkpoint(
                 epoch=epoch,
                 name=cfg.MODEL.NAME,
